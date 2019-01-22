@@ -66,13 +66,13 @@ namespace CoreLibDotCore
 
         }
 
-        public static void CheckPath(string Path)
+        public static void CheckPath(string path)
         {
-            if (!Directory.Exists(Path))
+            if (!Directory.Exists(path))
             {
                 try
                 {
-                    Directory.CreateDirectory(Path);
+                    Directory.CreateDirectory(path);
                 }
                 catch (Exception e)
                 {
