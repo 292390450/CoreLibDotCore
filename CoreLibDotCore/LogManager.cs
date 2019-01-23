@@ -11,7 +11,7 @@ namespace CoreLibDotCore
         public static void AddLog(string str)
         {
             CheckPath(StorePath);
-            string error = DateTime.Now.ToString(CultureInfo.InstalledUICulture) + " | " + "日志信息:  " + str + "\r\n";
+            string error = "——————————" + "\r\n" + DateTime.Now.ToString(CultureInfo.InstalledUICulture) + " | " + "日志信息:  " + str + "\r\n";
             string dateTime = DateTime.Now.ToShortDateString();
             dateTime = dateTime.Replace("/", "");
             try
@@ -38,7 +38,7 @@ namespace CoreLibDotCore
         public static void AddLog(Exception e)
         {
             CheckPath(StorePath);
-            string error = DateTime.Now.ToString(CultureInfo.InstalledUICulture) + " | " + "错误信息：" + e.Message + "\r\n导致错误的对象名称:" +
+            string error ="——————————"+"\r\n"+ DateTime.Now.ToString(CultureInfo.InstalledUICulture) + " | " + "错误信息：" + e.Message + "\r\n导致错误的对象名称:" +
                            e.Source + "\r\n引发异常的方法:" +
                            e.TargetSite + "\r\n帮助链接:" +
                            e.HelpLink + "\r\n调用堆:" +
