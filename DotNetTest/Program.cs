@@ -38,9 +38,9 @@ namespace DotNetTest
             //
        
             ConfigManager<MyClass>.Init(AppDomain.CurrentDomain.BaseDirectory+"1.xml",ConfigType.Xml);
-            ConfigManager<MyClass>.LoadAsync().Wait();
-            ConfigManager<MyClass>.GenraConfig().Wait();
-             MyClass rre= ConfigManager<MyClass>.LoadAsync().Result;
+            var jie=ConfigManager<MyClass>.LoadAsync().Result;
+          //  ConfigManager<MyClass>.GenraConfig().Wait();
+            // MyClass rre= ConfigManager<MyClass>.LoadAsync().Result;
             ConfigManager<MyClass>.Save().Wait();
            
 

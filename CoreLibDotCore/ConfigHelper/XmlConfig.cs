@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -20,8 +21,7 @@ namespace CoreLibDotCore.ConfigHelper
                 try
                 {
                     Type type = typeof(T);
-                    
-                    XElement xElement= CreateXelement(type);
+                    XElement xElement= CreateXelement(type,type.Name);
                     XDocument document=new XDocument(new XComment("配置文件"),
                     xElement);
                     document.Save(path);
@@ -33,7 +33,6 @@ namespace CoreLibDotCore.ConfigHelper
                        LogManager.AddLog(e);
                        return false;
                 }
-
             }));
         }
 
@@ -67,17 +66,27 @@ namespace CoreLibDotCore.ConfigHelper
             }));
         }
 
+
+        /// <summary>
+        /// 使用创建一个xml文档保存，还是加载本地文档进行修改？ 先使用直接创建一个覆盖保存
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="config"></param>
+        /// <returns></returns>
         public async Task SaveConfig(string path, T config)
         {
-            throw new NotImplementedException();
+            var type = typeof(T);
+            var xml= CreateXelement(type, type.Name);
+
+
         }
 
         /// <summary>
         /// 创建节点元素
         /// </summary>
-        public XElement CreateXelement(Type type)
+        public XElement CreateXelement(Type type,string name)
         {
-            var className = type.Name;
+            
             var propers = type.GetProperties();
             XElement[] xElements=new XElement[propers.Length];
          
@@ -86,7 +95,7 @@ namespace CoreLibDotCore.ConfigHelper
                 XElement childElement=null;
                 if (!propers[i].PropertyType.IsPrimitive && propers[i].PropertyType != typeof(string)&&!propers[i].PropertyType.IsValueType)  //不是是基本类型且不是string
                 {
-                  childElement=CreateXelement(propers[i].PropertyType);
+                  childElement=CreateXelement(propers[i].PropertyType,propers[i].Name);
                 }
                 else
                 {
@@ -94,10 +103,8 @@ namespace CoreLibDotCore.ConfigHelper
                 }
                 xElements[i] = childElement;
             }
-            XElement xElement = new XElement($"{className}",xElements);
+            XElement xElement = new XElement($"{name}",xElements);
             return xElement;
-
-
         }
 
 
@@ -109,14 +116,36 @@ namespace CoreLibDotCore.ConfigHelper
             var elemens= element.Elements();
             foreach (var xElement in elemens)
             {
-                if (xElement.HasElements)
+                PropertyInfo propertyInfo=null;
+                try
                 {
-                   var childClass= type1.GetProperty(xElement.Name.ToString()); 
-                   CreateEntity(xElement,childClass.PropertyType);
+                    propertyInfo = type1.GetProperty(xElement.Name.ToString());
+                }
+                catch (Exception e)
+                {
+                    LogManager.AddLog(e);
+                }
+
+                if (xElement.HasElements&&propertyInfo!=null)
+                {
+                   var child= CreateEntity(xElement, propertyInfo.PropertyType);
+                   propertyInfo.SetValue(entity,child,null);
+                   
                 }
                 else
                 {
-                    type1.GetProperty(xElement.Name.ToString())?.SetValue(entity, xElement.Value,null);
+                    if (!string.IsNullOrEmpty(xElement.Value)&& propertyInfo!= null)   //没有值，不必要转换
+                    {
+                        try
+                        {
+                            object v = Convert.ChangeType(xElement.Value, propertyInfo.PropertyType);
+                            propertyInfo?.SetValue(entity, v, null);
+                        }
+                        catch (Exception e)
+                        {
+                            LogManager.AddLog(e);
+                        }
+                    }
                 }
             }
 
