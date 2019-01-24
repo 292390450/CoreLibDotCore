@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -11,59 +8,64 @@ namespace CoreLibDotCore.ConfigHelper
 {
     public class XmlConfig<T> : IBaseConfig<T>
     {
-        private T _config;
-        private string _savePath;
         private object Obj = new object();
+        public bool IsLog { get; set; }
         public async Task<bool> GenrateConfig(string path)
         {
-            return await Task.Run((() =>
+            return await Task.Run(() =>
             {
                 try
                 {
                     Type type = typeof(T);
                     XElement xElement= CreateXelement(type,type.Name);
                     XDocument document=new XDocument(new XComment("配置文件"),
-                    xElement);
+                        xElement);
                     document.Save(path);
                     return true;
 
                 }
                 catch (Exception e)
                 {
-                       LogManager.AddLog(e);
-                       return false;
+                    if (IsLog)
+                    {
+                        LogManager.AddLog(e);
+                    }
+                    return false;
                 }
-            }));
+            });
         }
 
         public async Task<T> LoadConfig(string path)
         {
-          return await  Task.Run((() =>
-            {
-                try
-                {
-                    if (File.Exists(path))
-                    {
-                        XDocument docu;
-                        lock (Obj)
-                        {
-                            docu = XDocument.Load(path);
-                        }
+          return await  Task.Run(() =>
+          {
+              try
+              {
+                  if (File.Exists(path))
+                  {
+                      XDocument docu;
+                      lock (Obj)
+                      {
+                          docu = XDocument.Load(path);
+                      }
 
-                        XElement root = docu.Root;
-                        var entity = CreateEntity(root, typeof(T));
-                        return (T) entity;
+                      XElement root = docu.Root;
+                      var entity = CreateEntity(root, typeof(T));
+                      return (T) entity;
 
 
-                    }
-                    return default(T);
-                }
-                catch (Exception e)
-                {
-                    LogManager.AddLog(e);
-                    return default(T);
-                }
-            }));
+                  }
+                  return default(T);
+              }
+              catch (Exception e)
+              {
+                  if (IsLog)
+                  {
+                      LogManager.AddLog(e);
+                  }
+                  return default(T);
+              }
+          });
         }
 
 
@@ -75,9 +77,26 @@ namespace CoreLibDotCore.ConfigHelper
         /// <returns></returns>
         public async Task SaveConfig(string path, T config)
         {
-            var type = typeof(T);
-            var xml= CreateXelement(type, type.Name);
-
+           await Task.Run(() =>
+           {
+               try
+               {
+                   var type = config.GetType();
+                   var xml = CreateXelement(type, type.Name);
+                   //xml文档节点赋值
+                   AssignElement(xml, config);
+                   //保存到本地
+                   XDocument docu = new XDocument(new XComment($"{type.Name}"), xml);
+                   docu.Save(path);
+               }
+               catch (Exception e)
+               {
+                   if (IsLog)
+                   {
+                       LogManager.AddLog(e);
+                   }
+               }
+           });
 
         }
 
@@ -123,7 +142,10 @@ namespace CoreLibDotCore.ConfigHelper
                 }
                 catch (Exception e)
                 {
-                    LogManager.AddLog(e);
+                    if (IsLog)
+                    {
+                        LogManager.AddLog(e);
+                    }
                 }
 
                 if (xElement.HasElements&&propertyInfo!=null)
@@ -143,13 +165,46 @@ namespace CoreLibDotCore.ConfigHelper
                         }
                         catch (Exception e)
                         {
-                            LogManager.AddLog(e);
+                            if (IsLog)
+                            {
+                                LogManager.AddLog(e);
+                            }
                         }
                     }
                 }
             }
 
             return entity;
+        }
+
+
+     
+        public void AssignElement(XElement element,object eneity)
+        {
+            var type = eneity.GetType();
+            if (element.HasElements)
+            {
+                var elements = element.Elements();
+                foreach (var xElement in elements)
+                {
+                    var value = type.GetProperty(xElement.Name.ToString()).GetValue(eneity);
+                    if (xElement.HasElements)
+                    {
+                       
+                        AssignElement(xElement,value);
+                    }
+                    else
+                    {
+                        xElement.Value = value.ToString();
+                    }
+                }
+            }
+            else
+            {
+                element.Value = eneity.ToString();
+            }
+          
+            
         }
     }
 }

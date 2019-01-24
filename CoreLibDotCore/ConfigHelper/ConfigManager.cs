@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using System.Threading.Tasks;
 
 namespace CoreLibDotCore.ConfigHelper
 {
@@ -17,8 +12,9 @@ namespace CoreLibDotCore.ConfigHelper
         /// 初始化配置文件管理类
         /// </summary>
         /// <param name="path">路径应为全路径，包含文件名</param>
-        /// <param name="configType"></param>
-        public static void  Init(string path,ConfigType configType)
+        /// <param name="configType">json 或Xml</param>
+        /// <param name="isLog">发生错误时，是否打印日志，开启可能会降低一些性能</param>
+        public static void  Init(string path,ConfigType configType,bool isLog)
         {
             SavePath = path;
             ConfigType = configType;
@@ -31,15 +27,23 @@ namespace CoreLibDotCore.ConfigHelper
                     ConfigGenr=new XmlConfig<T>();
                     break;
             }
-        }
 
-        public static async Task<T> LoadAsync()
-        {
-            return await ConfigGenr.LoadConfig(SavePath);
+            ConfigGenr.IsLog = isLog;
         }
 
         /// <summary>
-        /// 不带参保存配置文件默认，使用
+        /// 加载配置文件，并对实体对象赋值
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<T> LoadAsync()
+        {
+            var config= await ConfigGenr.LoadConfig(SavePath);
+            Config = config;
+            return config;
+        }
+
+        /// <summary>
+        /// 不带参保存配置文件默认，使用实体值
         /// </summary>
         public static async Task Save()
         {
@@ -48,7 +52,7 @@ namespace CoreLibDotCore.ConfigHelper
 
 
         /// <summary>
-        /// 生成配置文件
+        /// 生成配置文件,在已经有配置的实体对象时才能生成
         /// </summary>
         public static async Task<bool> GenraConfig()
         {

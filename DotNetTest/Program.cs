@@ -37,12 +37,13 @@ namespace DotNetTest
 
             //
        
-            ConfigManager<MyClass>.Init(AppDomain.CurrentDomain.BaseDirectory+"1.xml",ConfigType.Xml);
-            var jie=ConfigManager<MyClass>.LoadAsync().Result;
+            ConfigManager<MyClass>.Init(AppDomain.CurrentDomain.BaseDirectory+"1.xml",ConfigType.Xml,false);
+            //var jie=ConfigManager<MyClass>.LoadAsync().Result;
+            ConfigManager<MyClass>.Config=new MyClass("dasd"){Age = 85,Hello = new Child(){Name = "你是哈狗"},Name = "dasw"};
           //  ConfigManager<MyClass>.GenraConfig().Wait();
             // MyClass rre= ConfigManager<MyClass>.LoadAsync().Result;
             ConfigManager<MyClass>.Save().Wait();
-           
+            
 
            
             JsonConfig<MyClass> mConfig=new JsonConfig<MyClass>();
